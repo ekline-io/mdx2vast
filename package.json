@@ -1,0 +1,55 @@
+{
+    "name": "mdx2vast",
+    "version": "0.3.0",
+    "description": "CLI to convert MDX to HTML while preserving JSX and expressions.",
+    "bin": {
+        "mdx2vast": "bin/cli.js"
+    },
+    "repository": "https://github.com/jdkato/mdx2vast",
+    "homepage": "https://vale.sh/docs/formats/mdx",
+    "author": "jdkato",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18"
+    },
+    "files": [
+        "bin"
+    ],
+    "keywords": [
+        "mdx",
+        "html",
+        "jsx",
+        "vale"
+    ],
+    "type": "module",
+    "dependencies": {
+        "@mdx-js/mdx": "^2.3.0",
+        "commander": "^11.0.0",
+        "fs": "^0.0.1-security",
+        "get-stdin": "^9.0.0",
+        "hast-util-to-html": "^9.0.5",
+        "hastscript": "^9.0.1",
+        "mdast-util-from-markdown": "^2.0.2",
+        "mdast-util-math": "^3.0.0",
+        "mdast-util-mdx": "^3.0.0",
+        "mdast-util-to-hast": "^13.2.0",
+        "micromark-extension-math": "^3.1.0",
+        "micromark-extension-mdxjs": "^3.0.0",
+        "path": "^0.12.7"
+    },
+    "devDependencies": {
+        "ava": "^6.1.3",
+        "esbuild": "^0.25.5",
+        "execa": "^9.3.0",
+        "pkg": "^5.8.1"
+    },
+    "scripts": {
+        "test": "ava",
+        "bundle": "esbuild bin/cli.js --bundle --platform=node --format=cjs --outfile=dist/bundled/index.js --minify --banner:js=\"#!/usr/bin/env node\" --define:process.env.PKG_VERSION=\"'0.3.0'\"",
+        "build": "npm run bundle && npm run build:all",
+        "build:all": "npm run build:linux && npm run build:macos && npm run build:windows",
+        "build:linux": "pkg dist/bundled/index.js --targets node18-linux-x64 --output dist/mdx2vast-linux",
+        "build:macos": "pkg dist/bundled/index.js --targets node18-macos-x64 --output dist/mdx2vast-macos",
+        "build:windows": "pkg dist/bundled/index.js --targets node18-win-x64 --output dist/mdx2vast-windows.exe"
+    }
+}
