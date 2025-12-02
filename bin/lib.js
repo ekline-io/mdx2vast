@@ -1,6 +1,3 @@
-// TODO: Should we use `micromark-extension-mdx` instead? It's "non-JS aware,"
-// which is what we want, but it doesn't seem to recognize non-expression
-// syntax (such as import statements).
 import { mdxjs } from "micromark-extension-mdxjs";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { mathFromMarkdown } from "mdast-util-math";
@@ -17,6 +14,15 @@ const mdxNodes = [
   "mdxJsxTextElement",
   "mdxTextExpression",
 ];
+
+// Mintlify components that contain prose (should convert children to HTML for Vale)
+const MINTLIFY_PROSE_COMPONENTS = new Set([
+  "Note", "Warning", "Info", "Tip", "Check", "Callout",
+  "Card", "CardGroup", "Accordion", "AccordionGroup", "Expandable",
+  "Columns", "Column", "Frame", "Steps", "Step", "Tabs", "Tab",
+  "Tooltip", "ParamField", "ResponseField", "Param", "Update",
+  "Aside", "Definition",
+]);
 
 function isComment(source) {
   return source.startsWith("{/*") && source.endsWith("*/}");
@@ -43,6 +49,28 @@ function createCustomHandler(doc) {
   };
 }
 
+// JSX handler with Mintlify support
+function createJsxHandler(doc) {
+  const mintlifyMode = /@mintlify\//.test(doc);
+
+  return function jsxHandler(state, node) {
+    const source = doc.slice(node.position.start.offset, node.position.end.offset);
+    const name = node.name;
+    const className = `mdxNode ${node.type}`;
+    const hasChildren = node.children && node.children.length > 0;
+
+    // Mintlify mode - convert prose component children to HTML for Vale analysis
+    if (mintlifyMode && hasChildren && MINTLIFY_PROSE_COMPONENTS.has(name)) {
+      return h("div", { className, "data-component": name }, state.all(node));
+    }
+
+    // Default (original behavior) - wrap in code/pre+code
+    return source.includes("\n")
+      ? h("pre", h("code", { className }, source))
+      : h("code", { className }, source);
+  };
+}
+
 function toValeAST(doc) {
   const mdast = fromMarkdown(doc, {
     extensions: [mdxjs(), math()],
@@ -50,6 +78,7 @@ function toValeAST(doc) {
   });
 
   const customHandler = createCustomHandler(doc);
+  const jsxHandler = createJsxHandler(doc);
 
   const hast = toHast(mdast, {
     allowDangerousHtml: true,
@@ -57,9 +86,9 @@ function toValeAST(doc) {
     handlers: {
       mdxjsEsm: customHandler,
       mdxFlowExpression: customHandler,
-      mdxJsxFlowElement: customHandler,
-      mdxJsxTextElement: customHandler,
       mdxTextExpression: customHandler,
+      mdxJsxFlowElement: jsxHandler,
+      mdxJsxTextElement: jsxHandler,
     },
   });
 
