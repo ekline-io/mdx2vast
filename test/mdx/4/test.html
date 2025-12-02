@@ -1,0 +1,35 @@
+<hr>
+<h2>id: math-equations
+description: Writing LaTeX Math Equations
+slug: /markdown-features/math-equations</h2>
+<h1>Math Equations</h1>
+<code class="mdxNode mdxjsEsm">import BrowserWindow from '@site/src/components/BrowserWindow';</code>
+<p>Mathematical equations can be rendered using <a href="https://katex.org">KaTeX</a>.</p>
+<p>See <a href="#configuration">below</a> how to activate them.</p>
+<h2>Usage</h2>
+<p>Please read the <a href="https://katex.org">KaTeX</a> documentation for more details.</p>
+<h3>Inline</h3>
+<p>Write inline math equations by wrapping LaTeX equations between <code>$</code>:</p>
+<pre><code class="language-latex">Let $f\colon[a,b]\to\R$ be Riemann integrable. Let $F\colon[a,b]\to\R$ be
+$F(x)=\int_{a}^{x} f(t)\,dt$. Then $F$ is continuous, and at all $x$ such that
+$f$ is continuous at $x$, $F$ is differentiable at $x$ with $F'(x)=f(x)$.
+</code></pre>
+<pre><code class="mdxNode mdxJsxFlowElement">&#x3C;BrowserWindow>
+
+Let $f\colon[a,b] \to \R$ be Riemann integrable. Let $F\colon[a,b]\to\R$ be $F(x)=
+\int_{a}^{x} f(t)\,dt$. Then $F$ is continuous, and at all $x$ such that $f$ is continuous at $x$, $F$ is differentiable at $x$ with $F'(x)=f(x)$.
+
+&#x3C;/BrowserWindow></code></pre>
+<h3>Blocks</h3>
+<p>For equation block or display mode, use line breaks and <code>$$</code>:</p>
+<pre><code class="language-latex">$$
+I = \int_0^{2\pi} \sin(x)\,dx
+$$
+</code></pre>
+<pre><code class="mdxNode mdxJsxFlowElement">&#x3C;BrowserWindow>
+
+$$
+I = \int_0^{2\pi} \sin(x)\,dx
+$$
+
+&#x3C;/BrowserWindow></code></pre>
