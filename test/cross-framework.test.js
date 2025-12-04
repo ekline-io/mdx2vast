@@ -1,5 +1,72 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect, afterEach } from '@jest/globals';
 import { toValeAST } from '../bin/lib.js';
+
+describe('MDX2VAST_FRAMEWORK Environment Variable', () => {
+  afterEach(() => {
+    delete process.env.MDX2VAST_FRAMEWORK;
+  });
+
+  test('env var overrides auto-detection', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'mintlify';
+    const mdx = `import { Card } from '@astrojs/starlight/components';
+
+<CardGroup>Mintlify component via env override</CardGroup>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="CardGroup"');
+  });
+
+  test('starlight framework via env var', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'starlight';
+    const mdx = `<FileTree>Starlight component</FileTree>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="FileTree"');
+  });
+
+  test('fern framework via env var', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'fern';
+    const mdx = `<Info>Fern info</Info>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="Info"');
+  });
+
+  test('mintlify framework via env var', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'mintlify';
+    const mdx = `<Note>Mintlify note</Note>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="Note"');
+  });
+
+  test('case-insensitive framework name', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'STARLIGHT';
+    const mdx = `<Aside>Content</Aside>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="Aside"');
+  });
+
+  test('mixed case framework name', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'Mintlify';
+    const mdx = `<Callout>Content</Callout>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="Callout"');
+  });
+
+  test('invalid env value falls back to auto-detection', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'invalid';
+    const mdx = `import { Card } from '@astrojs/starlight/components';
+
+<Card>Starlight card</Card>`;
+    const output = toValeAST(mdx);
+    expect(output).toContain('data-component="Card"');
+  });
+
+  test('invalid env value with no imports returns raw JSX', () => {
+    process.env.MDX2VAST_FRAMEWORK = 'unknown';
+    const mdx = `<Card>No framework detected</Card>`;
+    const output = toValeAST(mdx);
+    expect(output).not.toContain('data-component');
+    expect(output).toContain('<code');
+  });
+});
 
 describe('Framework Priority', () => {
   test('Starlight takes priority over Mintlify when both present', () => {
