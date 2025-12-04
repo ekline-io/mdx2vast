@@ -17,18 +17,18 @@ const mdxNodes = [
 
 /**
  * Framework configurations for prose component detection.
- * Priority order: Starlight > Fern > Mintlify
- * @type {Array<{pattern: RegExp, components: Set<string>}>}
+ * Key order determines auto-detection priority: Starlight > Fern > Mintlify
+ * @type {Record<string, {pattern: RegExp, components: Set<string>}>}
  */
-const FRAMEWORK_CONFIGS = [
-  {
+const FRAMEWORKS = {
+  starlight: {
     pattern: /@astrojs\//,
     components: new Set([
       "Aside", "Card", "CardGrid", "LinkCard",
       "Steps", "Tabs", "TabItem", "FileTree",
     ]),
   },
-  {
+  fern: {
     pattern: /@fern-ui\//,
     components: new Set([
       "Info", "Warning", "Success", "Error", "Note", "Launch", "Tip", "Check",
@@ -37,7 +37,7 @@ const FRAMEWORK_CONFIGS = [
       "Tooltip", "Indent", "ParamField",
     ]),
   },
-  {
+  mintlify: {
     pattern: /@mintlify\//,
     components: new Set([
       "Note", "Warning", "Info", "Tip", "Check", "Callout",
@@ -47,14 +47,18 @@ const FRAMEWORK_CONFIGS = [
       "Aside", "Definition",
     ]),
   },
-];
+};
 
 /**
  * @param {string} doc
  * @returns {Set<string> | null}
  */
 const getProseComponents = (doc) => {
-  for (const { pattern, components } of FRAMEWORK_CONFIGS) {
+  const envFramework = process.env.MDX2VAST_FRAMEWORK?.toLowerCase();
+  if (envFramework && FRAMEWORKS[envFramework]) {
+    return FRAMEWORKS[envFramework].components;
+  }
+  for (const { pattern, components } of Object.values(FRAMEWORKS)) {
     if (pattern.test(doc)) return components;
   }
   return null;
