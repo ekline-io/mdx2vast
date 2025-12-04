@@ -1,6 +1,6 @@
 {
     "name": "mdx2vast",
-    "version": "0.4.1",
+    "version": "0.6.0",
     "description": "CLI to convert MDX to HTML while preserving JSX and expressions.",
     "bin": {
         "mdx2vast": "bin/cli.js"
@@ -53,7 +53,7 @@
     },
     "scripts": {
         "test": "npm run build && ava && NODE_OPTIONS='--experimental-vm-modules' npx jest",
-        "bundle": "esbuild bin/cli.js --bundle --platform=node --format=cjs --outfile=dist/bundled/index.js --minify --define:process.env.PKG_VERSION=\"'0.4.1'\"",
+        "bundle": "esbuild bin/cli.js --bundle --platform=node --format=cjs --outfile=dist/bundled/index.js --minify --define:process.env.PKG_VERSION=\"'0.6.0'\"",
         "build": "npm run bundle && npm run build:all",
         "build:all": "npm run build:linux && npm run build:macos && npm run build:windows",
         "build:linux": "pkg dist/bundled/index.js --targets node18-linux-x64 --output dist/mdx2vast-linux",

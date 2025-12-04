@@ -15,63 +15,115 @@ const mdxNodes = [
   "mdxTextExpression",
 ];
 
-// Mintlify components that contain prose (should convert children to HTML for Vale)
-const MINTLIFY_PROSE_COMPONENTS = new Set([
-  "Note", "Warning", "Info", "Tip", "Check", "Callout",
-  "Card", "CardGroup", "Accordion", "AccordionGroup", "Expandable",
-  "Columns", "Column", "Frame", "Steps", "Step", "Tabs", "Tab",
-  "Tooltip", "ParamField", "ResponseField", "Param", "Update",
-  "Aside", "Definition",
-]);
+/**
+ * Framework configurations for prose component detection.
+ * Key order determines auto-detection priority: Starlight > Fern > Mintlify
+ * @type {Record<string, {pattern: RegExp, components: Set<string>}>}
+ */
+const FRAMEWORKS = {
+  starlight: {
+    pattern: /@astrojs\//,
+    components: new Set([
+      "Aside", "Card", "CardGrid", "LinkCard",
+      "Steps", "Tabs", "TabItem", "FileTree",
+    ]),
+  },
+  fern: {
+    pattern: /@fern-ui\//,
+    components: new Set([
+      "Info", "Warning", "Success", "Error", "Note", "Launch", "Tip", "Check",
+      "Accordion", "AccordionGroup", "Aside", "Card", "Frame",
+      "Steps", "Step", "Tabs", "Tab",
+      "Tooltip", "Indent", "ParamField",
+    ]),
+  },
+  mintlify: {
+    pattern: /@mintlify\//,
+    components: new Set([
+      "Note", "Warning", "Info", "Tip", "Check", "Callout",
+      "Card", "CardGroup", "Accordion", "AccordionGroup", "Expandable",
+      "Columns", "Column", "Frame", "Steps", "Step", "Tabs", "Tab",
+      "Tooltip", "ParamField", "ResponseField", "Param", "Update",
+      "Aside", "Definition",
+    ]),
+  },
+};
 
-function isComment(source) {
-  return source.startsWith("{/*") && source.endsWith("*/}");
-}
+/**
+ * @param {string} doc
+ * @returns {Set<string> | null}
+ */
+const getProseComponents = (doc) => {
+  const envFramework = process.env.MDX2VAST_FRAMEWORK?.toLowerCase();
+  if (envFramework && Object.hasOwn(FRAMEWORKS, envFramework)) {
+    return FRAMEWORKS[envFramework].components;
+  }
+  for (const { pattern, components } of Object.values(FRAMEWORKS)) {
+    if (pattern.test(doc)) return components;
+  }
+  return null;
+};
 
-function createCustomHandler(doc) {
-  return function customHandler(state, node, parent) {
-    const start = node.position.start.offset;
-    const end = node.position.end.offset;
+/**
+ * @param {string} source
+ * @returns {boolean}
+ */
+const isComment = (source) => source.startsWith("{/*") && source.endsWith("*/}");
 
-    const source = doc.slice(start, end);
-    if (node.type === "mdxFlowExpression" && isComment(source)) {
-      return { type: "comment", value: source.slice(3, -3) };
-    } else if (mdxNodes.includes(node.type)) {
-      const className = `mdxNode ${node.type}`;
-      if (source.includes("\n")) {
-        return h("pre", h("code", { className }, source));
-      } else {
-        return h("code", { className }, source);
-      }
-    }
+/**
+ * @param {string} doc
+ * @returns {Function}
+ */
+const createCustomHandler = (doc) => (state, node, parent) => {
+  const source = doc.slice(node.position.start.offset, node.position.end.offset);
 
-    return null;
-  };
-}
+  if (node.type === "mdxFlowExpression" && isComment(source)) {
+    return { type: "comment", value: source.slice(3, -3) };
+  }
 
-// JSX handler with Mintlify support
-function createJsxHandler(doc) {
-  const mintlifyMode = /@mintlify\//.test(doc);
-
-  return function jsxHandler(state, node) {
-    const source = doc.slice(node.position.start.offset, node.position.end.offset);
-    const name = node.name;
+  if (mdxNodes.includes(node.type)) {
     const className = `mdxNode ${node.type}`;
-    const hasChildren = node.children && node.children.length > 0;
+    return source.includes("\n")
+      ? h("pre", h("code", { className }, source))
+      : h("code", { className }, source);
+  }
 
-    // Mintlify mode - convert prose component children to HTML for Vale analysis
-    if (mintlifyMode && hasChildren && MINTLIFY_PROSE_COMPONENTS.has(name)) {
+  return null;
+};
+
+/**
+ * Creates a JSX handler with support for Mintlify, Starlight, and Fern frameworks.
+ * Detects framework via import patterns and converts prose component children to HTML.
+ * @param {string} doc
+ * @returns {Function}
+ */
+const createJsxHandler = (doc) => {
+  const proseComponents = getProseComponents(doc);
+
+  return (state, node) => {
+    const source = doc.slice(node.position.start.offset, node.position.end.offset);
+    const { name, children } = node;
+    const className = `mdxNode ${node.type}`;
+    const hasChildren = children && children.length > 0;
+
+    if (proseComponents && hasChildren && proseComponents.has(name)) {
       return h("div", { className, "data-component": name }, state.all(node));
     }
 
-    // Default (original behavior) - wrap in code/pre+code
     return source.includes("\n")
       ? h("pre", h("code", { className }, source))
       : h("code", { className }, source);
   };
-}
+};
 
-function toValeAST(doc) {
+/**
+ * Converts MDX content to HTML suitable for Vale linting.
+ * Detects documentation frameworks (Mintlify, Starlight, Fern) via import patterns
+ * and converts prose component children to HTML for Vale analysis.
+ * @param {string} doc - The MDX document content
+ * @returns {string} HTML output suitable for Vale
+ */
+const toValeAST = (doc) => {
   const mdast = fromMarkdown(doc, {
     extensions: [mdxjs(), math()],
     mdastExtensions: [mdxFromMarkdown(), mathFromMarkdown()],
@@ -93,6 +145,6 @@ function toValeAST(doc) {
   });
 
   return toHtml(hast);
-}
+};
 
 export { toValeAST };

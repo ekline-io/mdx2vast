@@ -8,6 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 
+const packageJson = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+
 const BUNDLED_FILE = path.join(rootDir, 'dist/bundled/index.js');
 const MACOS_BINARY = path.join(rootDir, 'dist/mdx2vast-macos');
 const LINUX_BINARY = path.join(rootDir, 'dist/mdx2vast-linux');
@@ -50,6 +52,19 @@ describe('Binary Execution', () => {
     const { stdout, exitCode } = await execa(binaryPath, ['--version']);
     expect(exitCode).toBe(0);
     expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  test('binary version matches CLI version', async () => {
+    const [binaryResult, cliResult] = await Promise.all([
+      execa(binaryPath, ['--version']),
+      execa('node', [cliPath, '--version'])
+    ]);
+    expect(binaryResult.stdout.trim()).toBe(cliResult.stdout.trim());
+  });
+
+  test('binary version matches package.json version', async () => {
+    const { stdout } = await execa(binaryPath, ['--version']);
+    expect(stdout.trim()).toBe(packageJson.version);
   });
 
   test('binary converts MDX', async () => {
