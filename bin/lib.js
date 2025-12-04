@@ -55,7 +55,7 @@ const FRAMEWORKS = {
  */
 const getProseComponents = (doc) => {
   const envFramework = process.env.MDX2VAST_FRAMEWORK?.toLowerCase();
-  if (envFramework && FRAMEWORKS[envFramework]) {
+  if (envFramework && Object.hasOwn(FRAMEWORKS, envFramework)) {
     return FRAMEWORKS[envFramework].components;
   }
   for (const { pattern, components } of Object.values(FRAMEWORKS)) {
