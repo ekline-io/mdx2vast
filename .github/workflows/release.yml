@@ -24,22 +24,18 @@ jobs:
           diff-search: true
 
       - name: Setup Node.js
-        if: steps.version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
       - name: Install dependencies
-        if: steps.version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: npm ci
 
       - name: Run tests
-        if: steps.version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: npm test
 
       - name: Build executables
-        if: steps.version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: npm run build
 
       - name: Create Release
