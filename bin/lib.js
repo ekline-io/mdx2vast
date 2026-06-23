@@ -3,6 +3,8 @@ import { fromMarkdown } from "mdast-util-from-markdown";
 import { mathFromMarkdown } from "mdast-util-math";
 import { math } from "micromark-extension-math";
 import { mdxFromMarkdown } from "mdast-util-mdx";
+import { gfm } from "micromark-extension-gfm";
+import { gfmFromMarkdown } from "mdast-util-gfm";
 import { toHast } from "mdast-util-to-hast";
 import { h } from "hastscript";
 import { toHtml } from "hast-util-to-html";
@@ -125,8 +127,8 @@ const createJsxHandler = (doc) => {
  */
 const toValeAST = (doc) => {
   const mdast = fromMarkdown(doc, {
-    extensions: [mdxjs(), math()],
-    mdastExtensions: [mdxFromMarkdown(), mathFromMarkdown()],
+    extensions: [mdxjs(), math(), gfm()],
+    mdastExtensions: [mdxFromMarkdown(), mathFromMarkdown(), gfmFromMarkdown()],
   });
 
   const customHandler = createCustomHandler(doc);
